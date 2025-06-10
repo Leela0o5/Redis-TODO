@@ -18,6 +18,15 @@ def show_tasks():
 def show_recent_tasks():
      return r.lrange("todo_list", -5, -1)
 
+def edit_task(prev_task,new_task,new_priority):
+    r.zrem("todo_zset",prev_task)
+    r.lrem("todo_list",1,prev_task)
+    r.xadd("todo-stream", {"action": "edit", "prev_task": prev_task, "new_task": new_task})
+    r.zadd("todo_zset", {new_task: new_priority})
+    r.lpush("todo_list", new_task)
+    print("Edited the task successfully")
+    
+
 def main():
     while True:
         print("--MENU--")
@@ -26,6 +35,7 @@ def main():
         print("3.show all tasks")
         print("4. Show 5 recently added tasks")
         print("5.Quit")
+        print("6.Edit a task")
         choice = input("Enter the number based on your choice: ")
 
         if choice == "1":
@@ -56,6 +66,13 @@ def main():
 
         elif choice == "5":
             break
+        elif choice == "6":
+            prev_task = input("Enter the task you want to edit: ")
+            new_task = input("Enter the new task name: ")
+            new_priority = int(input("Enter the new priority (1 - 10 )"))
+            edit_task(prev_task,new_task,new_priority)
+            print("\n")
+            
 
         else:
             print("invalid input.Try again")
