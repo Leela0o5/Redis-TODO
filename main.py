@@ -5,16 +5,18 @@ r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 def add_task(task,priority):
     r.zadd("todo_zset",{task:priority})
     r.xadd("todo-stream",{"action":"add","task":task})
+    r.lpush("todo_list", task)
 
 def del_task(task):
     r.zrem("todo_zset",task)
     r.xadd("todo-stream",{"action":"delete","task":task})
+    r.lrem("todo_list", 1, task)
 
 def show_tasks():
     return [task for task in r.zrange("todo_zset",0,-1)]
 
 def show_recent_tasks():
-    return [t for t in r.zrevrange("todo_zset", 0, 4)]
+     return r.lrange("todo_list", -5, -1)
 
 def main():
     while True:
@@ -29,7 +31,7 @@ def main():
         if choice == "1":
             task = input("Enter Task :")
             p = input("Enter its priority on the scale of (1-10): ")
-            add_task(task,p)
+            add_task(task,int(p))
             print("Task added")
             print("\n")
 
